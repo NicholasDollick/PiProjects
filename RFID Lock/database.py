@@ -2,6 +2,8 @@ import sqlite3
 import RPi.GPIO as GPIO
 import SimpleMFRC522
 import time
+import os
+import ascii
 
 def led_startup():
     GPIO.setwarnings(False)
@@ -58,14 +60,14 @@ def listen():
         auth.append(id[0])
     
     try:
-        while(flag):
+        while(True):
             GPIO.output(16, True)
             id, text = reader.read()
             if(id in auth):
                 GPIO.output(16, False)
                 led_correct()
                 print("Card is authorized")
-                flag = False
+                break
             else:
                 GPIO.output(16, False)
                 led_incorrect()
@@ -132,12 +134,13 @@ def remove_auth():
 
 def run():
     action = ""
+    ascii.splash()
     print()
     print("[*] Commands: ")
-    print("              1) Add Card")
-    print("              2) Remove Card")
-    print("              3) Scan Card")
-    print("             99) Exit")
+    print("           1) Add Card")
+    print("           2) Remove Card")
+    print("           3) Scan Card")
+    print("          99) Exit")
     print()
     
     while(action != "99"):
@@ -156,19 +159,19 @@ def run():
             curs.execute("""INSERT INTO admin(id) values(209992049463)""")
             conn.commit()
   
+def initialize_db():    
+    curs.execute("""CREATE TABLE IF NOT EXISTS auth(id INTEGER)""")
+    conn.commit()
+    curs.execute("""CREATE TABLE IF NOT EXISTS admin(id INTEGER)""")
+    conn.commit()
   
 reader = SimpleMFRC522.SimpleMFRC522()
-
-led_startup()
 
 conn = sqlite3.connect('test.db')
 curs = conn.cursor()
 
-curs.execute("""CREATE TABLE IF NOT EXISTS auth(id INTEGER)""")
-conn.commit()
-curs.execute("""CREATE TABLE IF NOT EXISTS admin(id INTEGER)""")
-conn.commit()
-
+initialize_db()
+led_startup()
 run()
 led_off()
 GPIO.cleanup()
